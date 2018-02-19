@@ -181,7 +181,7 @@ public class ExtratorCaracteristicas {
         }
 
         // Grava o arquivo ARFF no disco
-        File arquivo = new File("caracteristicas.arff");
+        File arquivo = new File("src\\opencv\\caracteristicas.arff");
         FileOutputStream f = new FileOutputStream(arquivo);
         f.write(exportacao.getBytes());
         f.close();
