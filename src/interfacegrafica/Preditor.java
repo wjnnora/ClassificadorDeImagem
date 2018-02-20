@@ -51,9 +51,9 @@ public class Preditor extends javax.swing.JFrame {
         
         // Fazendo a previsão
         double resultados[] = nb.distributionForInstance(novo);
-        DecimalFormat df = new DecimalFormat("#,###.0000");
-        lblNaiveBart.setText("Bart: " + df.format(resultados[0]));
-        lblNaiveHomer.setText("Homer: " + df.format(resultados[1]));
+        DecimalFormat df = new DecimalFormat("#.##%");
+        lblNaiveBart.setText("Bart: " + df.format(resultados[0]/(resultados[0]+resultados[1])));
+        lblNaiveHomer.setText("Homer: " + df.format(resultados[1]/(resultados[0]+resultados[1])));
     }
     public void carregaBaseWeka() throws Exception {
         DataSource ds = new DataSource("src\\opencv\\caracteristicas.arff");
