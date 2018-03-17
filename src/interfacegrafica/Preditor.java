@@ -18,9 +18,15 @@ import javax.swing.JFileChooser;
 import opencv.ExtratorImagem;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.bayes.NaiveBayesUpdateable;
+import weka.classifiers.functions.LibSVM;
+import weka.classifiers.lazy.IBk;
+import weka.classifiers.rules.JRip;
+import weka.classifiers.rules.OneR;
+import weka.classifiers.trees.J48;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SelectedTag;
 import weka.core.converters.ConverterUtils.DataSource;
 
 /**
@@ -35,11 +41,31 @@ public class Preditor extends javax.swing.JFrame {
         initComponents();
     }
     
-    public void classificaNaiveBayes () throws Exception {
+    public void classifica() throws Exception
+    {
+        //Naive Bayes
         NaiveBayes nb = new NaiveBayes();
-        // Criação da tabela de probabilidade
         nb.buildClassifier(instancias);
-        // Criação de novo registro
+            
+        //Arvore de decisão
+        J48 arvore = new J48();        
+        arvore.buildClassifier(instancias);
+        
+        //Regras
+        OneR oner = new OneR();
+        JRip jrip = new JRip();
+        
+        //Criação das tabelas de probabilidade
+        oner.buildClassifier(instancias);
+        jrip.buildClassifier(instancias);
+        
+        IBk ibk = new IBk(3);
+        ibk.buildClassifier(instancias);
+        
+        LibSVM svm = new LibSVM();
+        svm.setKernelType(new SelectedTag(LibSVM.KERNELTYPE_LINEAR, LibSVM.TAGS_KERNELTYPE));
+        svm.buildClassifier(instancias);
+        
         Instance novo = new DenseInstance(instancias.numAttributes());
         novo.setDataset(instancias);
         novo.setValue(0, Float.parseFloat(lblLaranjaBart.getText()));
@@ -49,12 +75,34 @@ public class Preditor extends javax.swing.JFrame {
         novo.setValue(4, Float.parseFloat(lblAzulHomer.getText()));
         novo.setValue(5, Float.parseFloat(lblSapatoHomer.getText()));
         
-        // Fazendo a previsão
-        double resultados[] = nb.distributionForInstance(novo);
         DecimalFormat df = new DecimalFormat("#.##%");
-        lblNaiveBart.setText("Bart: " + df.format(resultados[0]/(resultados[0]+resultados[1])));
-        lblNaiveHomer.setText("Homer: " + df.format(resultados[1]/(resultados[0]+resultados[1])));
+        
+        // Fazendo as previsões
+        double resultadosNaiveBayes[] = nb.distributionForInstance(novo);        
+        lblNaiveBart.setText("Bart: " + df.format(resultadosNaiveBayes[0]/(resultadosNaiveBayes[0]+resultadosNaiveBayes[1])));
+        lblNaiveHomer.setText("Homer: " + df.format(resultadosNaiveBayes[1]/(resultadosNaiveBayes[0]+resultadosNaiveBayes[1])));    
+        
+        double resultadosJ48[] = arvore.distributionForInstance(novo);
+        lblJ48bart.setText("Bart: " + df.format(resultadosJ48[0]/(resultadosJ48[0]+resultadosJ48[1])));
+        lblJ48homer.setText("Homer: " + df.format(resultadosJ48[1]/(resultadosJ48[0]+resultadosJ48[1])));    
+        
+        double resultadosOneR[] = oner.distributionForInstance(novo);          
+        lblOneRBart.setText("Bart: " + df.format(resultadosOneR[0]/(resultadosOneR[0]+resultadosOneR[1])));
+        lblOneRHomer.setText("Homer: " + df.format(resultadosOneR[1]/(resultadosOneR[0]+resultadosOneR[1])));   
+        
+        double resultadosJRip[] = jrip.distributionForInstance(novo);      
+        lblJRipBart.setText("Bart: " + df.format(resultadosJRip[0]/(resultadosJRip[0]+resultadosJRip[1])));
+        lblJRipHomer.setText("Homer: " + df.format(resultadosJRip[1]/(resultadosJRip[0]+resultadosJRip[1])));    
+        
+        double resultadosIbk[] = ibk.distributionForInstance(novo);      
+        lblIbkBart.setText("Bart: " + df.format(resultadosIbk[0]/(resultadosIbk[0]+resultadosIbk[1])));
+        lblIbkHomer.setText("Homer: " + df.format(resultadosIbk[1]/(resultadosIbk[0]+resultadosIbk[1])));
+        
+        double resultadosSVM[] = svm.distributionForInstance(novo);
+        lblLibSVMbart.setText("Bart: " + df.format(resultadosSVM[0]/(resultadosSVM[0]+resultadosSVM[1])));
+        lblLibSVMhomer.setText("Homer: " + df.format(resultadosSVM[1]/(resultadosSVM[0]+resultadosSVM[1])));
     }
+    
     public void carregaBaseWeka() throws Exception {
         DataSource ds = new DataSource("src\\opencv\\caracteristicas.arff");
         instancias = ds.getDataSet();
@@ -88,6 +136,21 @@ public class Preditor extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         lblNaiveBart = new javax.swing.JLabel();
         lblNaiveHomer = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        lblJ48bart = new javax.swing.JLabel();
+        lblJ48homer = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        lblOneRBart = new javax.swing.JLabel();
+        lblOneRHomer = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        lblJRipBart = new javax.swing.JLabel();
+        lblJRipHomer = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        lblIbkBart = new javax.swing.JLabel();
+        lblIbkHomer = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        lblLibSVMbart = new javax.swing.JLabel();
+        lblLibSVMhomer = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -111,17 +174,17 @@ public class Preditor extends javax.swing.JFrame {
 
         jLabel2.setText("Características do Homer");
 
-        lblLaranjaBart.setText("jLabel3");
+        lblLaranjaBart.setText("-");
 
-        lblAzulCalcaoBart.setText("jLabel4");
+        lblAzulCalcaoBart.setText("-");
 
-        lblAzulSapatoBart.setText("jLabel5");
+        lblAzulSapatoBart.setText("-");
 
-        lblAzulHomer.setText("jLabel6");
+        lblAzulHomer.setText("-");
 
-        lblMarromHomer.setText("jLabel7");
+        lblMarromHomer.setText("-");
 
-        lblSapatoHomer.setText("jLabel8");
+        lblSapatoHomer.setText("-");
 
         btnClassificar.setText("Classificar");
         btnClassificar.addActionListener(new java.awt.event.ActionListener() {
@@ -132,9 +195,39 @@ public class Preditor extends javax.swing.JFrame {
 
         jLabel3.setText("Naive Bayes");
 
-        lblNaiveBart.setText("jLabel4");
+        lblNaiveBart.setText("-");
 
-        lblNaiveHomer.setText("jLabel5");
+        lblNaiveHomer.setText("-");
+
+        jLabel4.setText("J48");
+
+        lblJ48bart.setText("-");
+
+        lblJ48homer.setText("-");
+
+        jLabel5.setText("OneR");
+
+        lblOneRBart.setText("-");
+
+        lblOneRHomer.setText("-");
+
+        jLabel6.setText("JRip");
+
+        lblJRipBart.setText("-");
+
+        lblJRipHomer.setText("-");
+
+        jLabel7.setText("IBk");
+
+        lblIbkBart.setText("-");
+
+        lblIbkHomer.setText("-");
+
+        jLabel8.setText("LibSVM");
+
+        lblLibSVMbart.setText("-");
+
+        lblLibSVMhomer.setText("-");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -146,11 +239,40 @@ public class Preditor extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 825, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(btnExtrairCaracteristicas)
-                                .addGap(18, 18, 18)
-                                .addComponent(btnClassificar, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(btnExtrairCaracteristicas)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addComponent(jLabel3)
+                                        .addGap(74, 74, 74)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(lblJ48bart)
+                                            .addComponent(jLabel4)
+                                            .addComponent(lblJ48homer)
+                                            .addComponent(jLabel8)
+                                            .addComponent(lblLibSVMbart)
+                                            .addComponent(lblLibSVMhomer))))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(18, 18, 18)
+                                        .addComponent(btnClassificar, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(118, 118, 118)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(lblOneRBart)
+                                            .addComponent(jLabel5)
+                                            .addComponent(lblOneRHomer))
+                                        .addGap(100, 100, 100)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(lblJRipHomer)
+                                            .addComponent(jLabel6)
+                                            .addComponent(lblJRipBart)))))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(lblNaiveHomer)
+                                    .addGap(227, 227, 227))
+                                .addComponent(lblNaiveBart, javax.swing.GroupLayout.Alignment.LEADING))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel1)
@@ -163,14 +285,14 @@ public class Preditor extends javax.swing.JFrame {
                                     .addComponent(lblMarromHomer)
                                     .addComponent(lblAzulHomer)
                                     .addComponent(jLabel2)))
-                            .addComponent(jLabel3)
-                            .addComponent(lblNaiveBart)
-                            .addComponent(lblNaiveHomer)))
+                            .addComponent(jLabel7)
+                            .addComponent(lblIbkBart)
+                            .addComponent(lblIbkHomer)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btnSelecionarImagem)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtCaminhoImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 956, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(169, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -203,11 +325,36 @@ public class Preditor extends javax.swing.JFrame {
                             .addComponent(lblAzulSapatoBart)
                             .addComponent(lblSapatoHomer))
                         .addGap(56, 56, 56)
-                        .addComponent(jLabel3)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel6))
                         .addGap(18, 18, 18)
-                        .addComponent(lblNaiveBart)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblNaiveBart)
+                            .addComponent(lblJ48bart)
+                            .addComponent(lblOneRBart)
+                            .addComponent(lblJRipBart))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblNaiveHomer)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblJ48homer)
+                                .addComponent(lblOneRHomer)
+                                .addComponent(lblJRipHomer))
+                            .addComponent(lblNaiveHomer))
+                        .addGap(63, 63, 63)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel7)
+                            .addComponent(jLabel8))
+                        .addGap(33, 33, 33)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblIbkBart)
+                            .addComponent(lblLibSVMbart))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblIbkHomer)
+                            .addComponent(lblLibSVMhomer))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -248,7 +395,7 @@ public class Preditor extends javax.swing.JFrame {
     private void btnClassificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClassificarActionPerformed
         try {
             carregaBaseWeka();
-            classificaNaiveBayes();
+            classifica();
         } catch (Exception ex) {
             Logger.getLogger(Preditor.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -296,14 +443,29 @@ public class Preditor extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel lblAzulCalcaoBart;
     private javax.swing.JLabel lblAzulHomer;
     private javax.swing.JLabel lblAzulSapatoBart;
+    private javax.swing.JLabel lblIbkBart;
+    private javax.swing.JLabel lblIbkHomer;
     private javax.swing.JLabel lblImagem;
+    private javax.swing.JLabel lblJ48bart;
+    private javax.swing.JLabel lblJ48homer;
+    private javax.swing.JLabel lblJRipBart;
+    private javax.swing.JLabel lblJRipHomer;
     private javax.swing.JLabel lblLaranjaBart;
+    private javax.swing.JLabel lblLibSVMbart;
+    private javax.swing.JLabel lblLibSVMhomer;
     private javax.swing.JLabel lblMarromHomer;
     private javax.swing.JLabel lblNaiveBart;
     private javax.swing.JLabel lblNaiveHomer;
+    private javax.swing.JLabel lblOneRBart;
+    private javax.swing.JLabel lblOneRHomer;
     private javax.swing.JLabel lblSapatoHomer;
     private javax.swing.JTextField txtCaminhoImagem;
     // End of variables declaration//GEN-END:variables
