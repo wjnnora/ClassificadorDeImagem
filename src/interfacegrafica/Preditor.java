@@ -5,10 +5,16 @@
  */
 package interfacegrafica;
 
+import com.sun.corba.se.impl.io.IIOPOutputStream;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -165,6 +171,8 @@ public class Preditor extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         lblMultiLayerBart = new javax.swing.JLabel();
         lblMultiLayerHomer = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -249,6 +257,20 @@ public class Preditor extends javax.swing.JFrame {
 
         lblMultiLayerHomer.setText("-");
 
+        jButton1.setText("Treinar/Gerar Modelo");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton2.setText("Classificar Usando Modelo");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -316,8 +338,11 @@ public class Preditor extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btnSelecionarImagem)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtCaminhoImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 956, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(169, Short.MAX_VALUE))
+                        .addComponent(txtCaminhoImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 956, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -328,7 +353,6 @@ public class Preditor extends javax.swing.JFrame {
                     .addComponent(txtCaminhoImagem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblImagem, javax.swing.GroupLayout.DEFAULT_SIZE, 932, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(btnExtrairCaracteristicas)
@@ -382,9 +406,13 @@ public class Preditor extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblIbkHomer)
                             .addComponent(lblLibSVMhomer)
-                            .addComponent(lblMultiLayerHomer))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                            .addComponent(lblMultiLayerHomer)))
+                    .addComponent(lblImagem, javax.swing.GroupLayout.PREFERRED_SIZE, 773, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton2)
+                .addContainerGap(77, Short.MAX_VALUE))
         );
 
         pack();
@@ -429,6 +457,53 @@ public class Preditor extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnClassificarActionPerformed
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try {
+            carregaBaseWeka();
+            J48 j48 = new J48();
+            j48.buildClassifier(instancias);
+            
+            ObjectOutputStream  classificador = new ObjectOutputStream(new FileOutputStream("src/opencv/arvore_treinada.model"));
+            classificador.writeObject(j48);
+            classificador.flush();
+            classificador.close();
+            
+        } catch (Exception ex) {
+            Logger.getLogger(Preditor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        try {
+            ObjectInputStream modelo = new ObjectInputStream(new FileInputStream("src/opencv/arvore_treinada.model"));
+            J48 j48 = (J48)modelo.readObject();
+            modelo.close();
+            
+            
+            Instance novo = new DenseInstance(instancias.numAttributes());
+            novo.setDataset(instancias);
+            novo.setValue(0, Float.parseFloat(lblLaranjaBart.getText()));
+            novo.setValue(1, Float.parseFloat(lblAzulCalcaoBart.getText()));
+            novo.setValue(2, Float.parseFloat(lblAzulSapatoBart.getText()));
+            novo.setValue(3, Float.parseFloat(lblMarromHomer.getText()));
+            novo.setValue(4, Float.parseFloat(lblAzulHomer.getText()));
+            novo.setValue(5, Float.parseFloat(lblSapatoHomer.getText()));
+
+            DecimalFormat df = new DecimalFormat("#.##%");
+
+            double resultados[] = j48.distributionForInstance(novo);
+            lblJ48bart.setText("Bart: " + df.format(resultados[0] / (resultados[0] + resultados[1])));
+            lblJ48homer.setText("Homer: " + df.format(resultados[1]/(resultados[0]+resultados[1])));
+            
+        } catch (IOException ex) {
+            Logger.getLogger(Preditor.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(Preditor.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            Logger.getLogger(Preditor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -468,6 +543,8 @@ public class Preditor extends javax.swing.JFrame {
     private javax.swing.JButton btnClassificar;
     private javax.swing.JButton btnExtrairCaracteristicas;
     private javax.swing.JButton btnSelecionarImagem;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
